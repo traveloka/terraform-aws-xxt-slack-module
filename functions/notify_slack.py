@@ -48,9 +48,15 @@ def default_service_notification(subject, message):
         "fields": [{"title": subject if subject else "Message", "value": "`" + message + "`", "short": False}]
     }
 
+def default_user_tag_notification(subject, message):
+    return {
+        "fallback": "A new message",
+        "fields": [{"title": subject if subject else "Message", "value": "<@" + message + ">", "short": False}]
+    }
+
 
 # Send a message to a slack channel
-def notify_slack(subject, message, service_name, service_version, region):
+def notify_slack(subject, message, service_name, service_version, deployer, region):
     slack_url = os.environ['SLACK_WEBHOOK_URL']
     if not slack_url.startswith("http"):
         slack_url = decrypt(slack_url)
@@ -78,6 +84,7 @@ def notify_slack(subject, message, service_name, service_version, region):
         payload['text'] = "<!subteam^S582WGVJA> deployment success for detail below:"
         payload['attachments'].append(default_service_notification("Service Name", service_name))
         payload['attachments'].append(default_service_notification("Service Version", service_version))
+        payload['attachments'].append(default_user_tag_notification("Deployer", deployer))
 
     data = urllib.parse.urlencode({"payload": json.dumps(payload)}).encode("utf-8")
     req = urllib.request.Request(slack_url)
@@ -89,8 +96,9 @@ def lambda_handler(event, context):
     message = event['Records'][0]['Sns']['Message']
     service_name = event['Records'][0]['Sns']['MessageAttributes']['service_name']['Value']
     service_version = event['Records'][0]['Sns']['MessageAttributes']['service_version']['Value']
+    deployer = event['Records'][0]['Sns']['MessageAttributes']['deployer']['Value']
     region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
-    notify_slack(subject, message, service_name, service_version, region)
+    notify_slack(subject, message, service_name, service_version, deployer, region)
 
     return message
 
