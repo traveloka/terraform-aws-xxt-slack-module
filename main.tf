@@ -72,6 +72,8 @@ resource "aws_lambda_function" "notify_slack" {
       SLACK_CHANNEL     = "${var.slack_channel}"
       SLACK_USERNAME    = "${var.slack_username}"
       SLACK_EMOJI       = "${var.slack_emoji}"
+      SERVICE_NAME      = "${var.service_name}"
+      SLACK_EMOJI       = "${var.service_version}"
     }
   }
 

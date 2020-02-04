@@ -52,6 +52,8 @@ def notify_slack(subject, message, region):
     slack_channel = os.environ['SLACK_CHANNEL']
     slack_username = os.environ['SLACK_USERNAME']
     slack_emoji = os.environ['SLACK_EMOJI']
+    service_name = os,environ['SERVICE_NAME']
+    service_version = os.environ['SERVICE_VERSION']
 
     payload = {
         "channel": slack_channel,
@@ -69,8 +71,7 @@ def notify_slack(subject, message, region):
         payload['text'] = "AWS CloudWatch notification - " + message["AlarmName"]
         payload['attachments'].append(notification)
     else:
-        payload['text'] = "Test Ganti Name"
-        payload['attachments'].append(default_notification(subject, message))
+        payload['text'] = "@arshad update " + service_name + " to " + service_version
 
     data = urllib.parse.urlencode({"payload": json.dumps(payload)}).encode("utf-8")
     req = urllib.request.Request(slack_url)

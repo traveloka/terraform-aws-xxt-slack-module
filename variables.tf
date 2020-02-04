@@ -39,6 +39,16 @@ variable "slack_emoji" {
   default     = ":aws:"
 }
 
+variable "service_name" {
+  description = "A service name deployed that will appear on Slack messages"
+  default     = "xxtdata"
+}
+
+variable "service_version" {
+  description = "A service version deployed that will appear on Slack messages"
+  default     = "12345-axes-xxtdata"
+}
+
 variable "kms_key_arn" {
   description = "ARN of the KMS key used for decrypting slack webhook url"
   default     = ""
