@@ -17,6 +17,12 @@ data "aws_iam_policy_document" "sns-topic-policy" {
   }
 }
 
+resource "aws_sns_topic_policy" "default" {
+  arn = "${local.sns_topic_arn}"
+
+  policy = "${data.aws_iam_policy_document.sns-topic-policy.json}"
+}
+
 data "aws_iam_policy_document" "assume_role" {
   count = "${var.create}"
 
