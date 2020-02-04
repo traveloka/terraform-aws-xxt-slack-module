@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "xxt-sns-product-push-topic-policy" {
+data "aws_iam_policy_document" "sns-topic-policy" {
   statement {
     effect = "Allow"
     principals {
