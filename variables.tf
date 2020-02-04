@@ -32,6 +32,7 @@ variable "slack_channel" {
 
 variable "slack_username" {
   description = "The username that will appear on Slack messages"
+  default = "reporter"
 }
 
 variable "slack_emoji" {

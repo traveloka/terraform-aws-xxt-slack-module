@@ -19,32 +19,38 @@ def cloudwatch_notification(message, region):
     states = {'OK': 'good', 'INSUFFICIENT_DATA': 'warning', 'ALARM': 'danger'}
 
     return {
-            "color": states[message['NewStateValue']],
-            "fallback": "Alarm {} triggered".format(message['AlarmName']),
-            "fields": [
-                { "title": "Alarm Name", "value": message['AlarmName'], "short": True },
-                { "title": "Alarm Description", "value": message['AlarmDescription'], "short": False},
-                { "title": "Alarm reason", "value": message['NewStateReason'], "short": False},
-                { "title": "Old State", "value": message['OldStateValue'], "short": True },
-                { "title": "Current State", "value": message['NewStateValue'], "short": True },
-                {
-                    "title": "Link to Alarm",
-                    "value": "https://console.aws.amazon.com/cloudwatch/home?region=" + region + "#alarm:alarmFilter=ANY;name=" + urllib.parse.quote_plus(message['AlarmName']),
-                    "short": False
-                }
-            ]
-        }
+        "color": states[message['NewStateValue']],
+        "fallback": "Alarm {} triggered".format(message['AlarmName']),
+        "fields": [
+            { "title": "Alarm Name", "value": message['AlarmName'], "short": True },
+            { "title": "Alarm Description", "value": message['AlarmDescription'], "short": False},
+            { "title": "Alarm reason", "value": message['NewStateReason'], "short": False},
+            { "title": "Old State", "value": message['OldStateValue'], "short": True },
+            { "title": "Current State", "value": message['NewStateValue'], "short": True },
+            {
+                "title": "Link to Alarm",
+                "value": "https://console.aws.amazon.com/cloudwatch/home?region=" + region + "#alarm:alarmFilter=ANY;name=" + urllib.parse.quote_plus(message['AlarmName']),
+                "short": False
+            }
+        ]
+    }
 
 
 def default_notification(subject, message):
     return {
-            "fallback": "A new message",
-            "fields": [{"title": subject if subject else "Message", "value": json.dumps(message), "short": False}]
-        }
+        "fallback": "A new message",
+        "fields": [{"title": subject if subject else "Message", "value": json.dumps(message), "short": False}]
+    }
+
+def default_service_notification(subject, message):
+    return {
+        "fallback": "A new message",
+        "fields": [{"title": subject if subject else "Message", "value": "`" + message + "`", "short": False}]
+    }
 
 
 # Send a message to a slack channel
-def notify_slack(subject, message, region):
+def notify_slack(subject, message, service_name, service_version, region):
     slack_url = os.environ['SLACK_WEBHOOK_URL']
     if not slack_url.startswith("http"):
         slack_url = decrypt(slack_url)
@@ -52,8 +58,6 @@ def notify_slack(subject, message, region):
     slack_channel = os.environ['SLACK_CHANNEL']
     slack_username = os.environ['SLACK_USERNAME']
     slack_emoji = os.environ['SLACK_EMOJI']
-    service_name = os,environ['SERVICE_NAME']
-    service_version = os.environ['SERVICE_VERSION']
 
     payload = {
         "channel": slack_channel,
@@ -71,7 +75,9 @@ def notify_slack(subject, message, region):
         payload['text'] = "AWS CloudWatch notification - " + message["AlarmName"]
         payload['attachments'].append(notification)
     else:
-        payload['text'] = "@arshad update " + service_name + " to " + service_version
+        payload['text'] = "<!subteam^S582WGVJA> deployment success for detail below:"
+        payload['attachments'].append(default_service_notification("Service Name", service_name))
+        payload['attachments'].append(default_service_notification("Service Version", service_version))
 
     data = urllib.parse.urlencode({"payload": json.dumps(payload)}).encode("utf-8")
     req = urllib.request.Request(slack_url)
@@ -81,9 +87,10 @@ def notify_slack(subject, message, region):
 def lambda_handler(event, context):
     subject = event['Records'][0]['Sns']['Subject']
     message = event['Records'][0]['Sns']['Message']
+    service_name = event['Records'][0]['Sns']['MessageAttributes']['service_name']['Value']
+    service_version = event['Records'][0]['Sns']['MessageAttributes']['service_version']['Value']
     region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
-    notify_slack(subject, message, region)
+    notify_slack(subject, message, service_name, service_version, region)
 
     return message
 
-#notify_slack({"AlarmName":"Example","AlarmDescription":"Example alarm description.","AWSAccountId":"000000000000","NewStateValue":"ALARM","NewStateReason":"Threshold Crossed","StateChangeTime":"2017-01-12T16:30:42.236+0000","Region":"EU - Ireland","OldStateValue":"OK"}, "eu-west-1")
