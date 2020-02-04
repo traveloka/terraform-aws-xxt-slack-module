@@ -2,6 +2,7 @@ from __future__ import print_function
 import os, boto3, json, base64
 import urllib.request, urllib.parse
 import logging
+import time;
 
 
 # Decrypt encrypted URL with KMS
@@ -42,21 +43,37 @@ def default_notification(subject, message):
         "fields": [{"title": subject if subject else "Message", "value": json.dumps(message), "short": False}]
     }
 
-def default_service_notification(subject, message):
+def construct_message(service_name, service_version, deployment_type, jira_link, deployer):
     return {
-        "fallback": "A new message",
-        "fields": [{"title": subject if subject else "Message", "value": "`" + message + "`", "short": False}]
-    }
-
-def default_user_tag_notification(subject, message):
-    return {
-        "fallback": "A new message",
-        "fields": [{"title": subject if subject else "Message", "value": "<@" + message + ">", "short": False}]
+        "fallback": "Axes Deployment Status - " + deployment_type,
+        "color": "#f88379",
+        "author_name": "Axes Deployment Status - " + deployment_type,
+        "text": "<!subteam^S582WGVJA> this build is successfully deployed: ",
+        "fields": [
+            {
+                "title": "Service Name",
+                "value": service_name,
+                "short": False
+            },
+            {
+                "title": "Service Version",
+                "value": service_version,
+                "short": False
+            },
+            {
+                "title": "Jira Link",
+                "value": jira_link,
+                "short": False
+            }
+        ],
+        "footer": "Deployed by <@" + deployer + ">",
+        "footer_icon": "https://axes.traveloka.com/static/favicon.ico",
+        "ts": time.time()
     }
 
 
 # Send a message to a slack channel
-def notify_slack(subject, message, service_name, service_version, deployer, region):
+def notify_slack(subject, message, service_name, service_version, deployment_type, jira_link, deployer, region):
     slack_url = os.environ['SLACK_WEBHOOK_URL']
     if not slack_url.startswith("http"):
         slack_url = decrypt(slack_url)
@@ -81,10 +98,7 @@ def notify_slack(subject, message, service_name, service_version, deployer, regi
         payload['text'] = "AWS CloudWatch notification - " + message["AlarmName"]
         payload['attachments'].append(notification)
     else:
-        payload['text'] = "<!subteam^S582WGVJA> deployment success for detail below:"
-        payload['attachments'].append(default_service_notification("Service Name", service_name))
-        payload['attachments'].append(default_service_notification("Service Version", service_version))
-        payload['attachments'].append(default_user_tag_notification("Deployer", deployer))
+        payload['attachments'].append(construct_message(service_name, service_version, deployment_type, jira_link, deployer))
 
     data = urllib.parse.urlencode({"payload": json.dumps(payload)}).encode("utf-8")
     req = urllib.request.Request(slack_url)
@@ -96,9 +110,11 @@ def lambda_handler(event, context):
     message = event['Records'][0]['Sns']['Message']
     service_name = event['Records'][0]['Sns']['MessageAttributes']['service_name']['Value']
     service_version = event['Records'][0]['Sns']['MessageAttributes']['service_version']['Value']
+    deployment_type = event['Records'][0]['Sns']['MessageAttributes']['deployment_type']['Value']
+    jira_link = event['Records'][0]['Sns']['MessageAttributes']['jira_link']['Value']
     deployer = event['Records'][0]['Sns']['MessageAttributes']['deployer']['Value']
     region = event['Records'][0]['Sns']['TopicArn'].split(":")[3]
-    notify_slack(subject, message, service_name, service_version, deployer, region)
+    notify_slack(subject, message, service_name, service_version, deployment_type, jira_link, deployer, region)
 
     return message
 
