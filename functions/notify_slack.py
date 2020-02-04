@@ -69,7 +69,7 @@ def notify_slack(subject, message, region):
         payload['text'] = "AWS CloudWatch notification - " + message["AlarmName"]
         payload['attachments'].append(notification)
     else:
-        payload['text'] = "AWS notification"
+        payload['text'] = "Test Ganti Name"
         payload['attachments'].append(default_notification(subject, message))
 
     data = urllib.parse.urlencode({"payload": json.dumps(payload)}).encode("utf-8")
