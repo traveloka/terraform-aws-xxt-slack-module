@@ -1,3 +1,22 @@
+data "aws_iam_policy_document" "sns-topic-policy" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = [
+        "arn:aws:iam::630072297223:role/SuperAdmin"
+      ]
+    }
+    resources = [
+      "${local.sns_topic_arn}"
+    ]
+    sid = "readWriteSNS"
+    actions = [
+      "SNS:Publish",
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "assume_role" {
   count = "${var.create}"
 
