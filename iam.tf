@@ -4,7 +4,10 @@ data "aws_iam_policy_document" "sns-topic-policy" {
     principals {
       type        = "AWS"
       identifiers = [
-        "arn:aws:iam::630072297223:role/SuperAdmin"
+        "arn:aws:iam::630072297223:role/SuperAdmin",
+        "arn:aws:iam::124129351750:role/SuperAdmin",
+        "arn:aws:iam::124129351750:role/PowerUser",
+        "arn:aws:iam::630072297223:role/PowerUser"
       ]
     }
     resources = [
