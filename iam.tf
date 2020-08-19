@@ -7,7 +7,10 @@ data "aws_iam_policy_document" "sns-topic-policy" {
         "arn:aws:iam::630072297223:role/SuperAdmin",
         "arn:aws:iam::124129351750:role/SuperAdmin",
         "arn:aws:iam::124129351750:role/PowerUser",
-        "arn:aws:iam::630072297223:role/PowerUser"
+        "arn:aws:iam::630072297223:role/PowerUser",
+        "arn:aws:iam::124129351750:role/Deployer_001",
+        "arn:aws:iam::124129351750:role/Deployer_002",
+        "arn:aws:iam::124129351750:role/Deployer_003"
       ]
     }
     resources = [
